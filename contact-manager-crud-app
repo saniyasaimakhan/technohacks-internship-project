@@ -1,0 +1,48 @@
+const express = require("express");
+const fs = require("fs");
+const bodyParser = require("body-parser");
+const app = express();
+const PORT = 3000;
+
+app.use(bodyParser.json());
+app.use(express.static("public"));
+
+const DATA_FILE = "data.json";
+
+// Read contacts
+app.get("/api/contacts", (req, res) => {
+  const data = JSON.parse(fs.readFileSync(DATA_FILE));
+  res.json(data);
+});
+
+// Add contact
+app.post("/api/contacts", (req, res) => {
+  const contacts = JSON.parse(fs.readFileSync(DATA_FILE));
+  const newContact = req.body;
+  newContact.id = Date.now();
+  contacts.push(newContact);
+  fs.writeFileSync(DATA_FILE, JSON.stringify(contacts));
+  res.json(newContact);
+});
+
+// Update contact
+app.put("/api/contacts/:id", (req, res) => {
+  let contacts = JSON.parse(fs.readFileSync(DATA_FILE));
+  const id = parseInt(req.params.id);
+  contacts = contacts.map((c) => (c.id === id ? { ...c, ...req.body } : c));
+  fs.writeFileSync(DATA_FILE, JSON.stringify(contacts));
+  res.json({ message: "Contact updated" });
+});
+
+// Delete contact
+app.delete("/api/contacts/:id", (req, res) => {
+  let contacts = JSON.parse(fs.readFileSync(DATA_FILE));
+  const id = parseInt(req.params.id);
+  contacts = contacts.filter((c) => c.id !== id);
+  fs.writeFileSync(DATA_FILE, JSON.stringify(contacts));
+  res.json({ message: "Contact deleted" });
+});
+
+app.listen(PORT, () =>
+  console.log(`Server running on http://localhost:${PORT}`),
+);
