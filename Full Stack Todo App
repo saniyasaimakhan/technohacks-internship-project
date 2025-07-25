@@ -1,0 +1,53 @@
+const express = require('express');
+const fs = require('fs');
+const app = express();
+const PORT = 3000;
+const FILE = 'data.json';
+
+app.use(express.static('.'));
+app.use(express.json());
+
+// Initialize data file if it doesn't exist
+if (!fs.existsSync(FILE)) {
+  fs.writeFileSync(FILE, '[]');
+}
+
+// Get all tasks
+app.get('/tasks', (req, res) => {
+  const data = JSON.parse(fs.readFileSync(FILE));
+  res.json(data);
+});
+
+// Add task
+app.post('/tasks', (req, res) => {
+  const data = JSON.parse(fs.readFileSync(FILE));
+  data.push({ text: req.body.text, completed: false });
+  fs.writeFileSync(FILE, JSON.stringify(data));
+  res.sendStatus(201);
+});
+
+// Delete task
+app.delete('/tasks/:index', (req, res) => {
+  const data = JSON.parse(fs.readFileSync(FILE));
+  data.splice(req.params.index, 1);
+  fs.writeFileSync(FILE, JSON.stringify(data));
+  res.sendStatus(200);
+});
+
+// Edit task
+app.put('/tasks/:index', (req, res) => {
+  const data = JSON.parse(fs.readFileSync(FILE));
+  data[req.params.index].text = req.body.text;
+  fs.writeFileSync(FILE, JSON.stringify(data));
+  res.sendStatus(200);
+});
+
+// Toggle task completion
+app.patch('/tasks/:index/toggle', (req, res) => {
+  const data = JSON.parse(fs.readFileSync(FILE));
+  data[req.params.index].completed = !data[req.params.index].completed;
+  fs.writeFileSync(FILE, JSON.stringify(data));
+  res.sendStatus(200);
+});
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
